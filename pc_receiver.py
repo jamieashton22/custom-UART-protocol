@@ -49,9 +49,11 @@ def verify_frame(buffer):
 
 #--------- GET DISTANCE function ------------
 
-def get_distance(duration):
-    return(duration * 0.0343 * 0.5)
+def get_measurement(type, duration):
 
+    if type == 1:        # ultrasonic distance measurement
+        return(duration * 0.0343 * 0.5)
+    
 
 # ------ GET AND SELECT PORT --------------
 
@@ -116,7 +118,7 @@ while True:
                     payload_low = unescaped_buffer[3]
                     
                     duration = payload_high << 8 | payload_low
-                    distance = get_distance(duration)
+                    distance = get_measurement(type, duration)
                     print(distance)
                      
         elif in_frame == True:
