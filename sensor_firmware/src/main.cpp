@@ -1,11 +1,5 @@
 // Arduino Firmware
 
-// loop: assemble frame (header, payload, checksum)
-//        send start flag
-//        call escaping function on every byte in frame
-//        send end flag
-
-// need function to perform escaping ...
 //==========================================================
 
 
@@ -18,6 +12,8 @@
 #define ESC 0x7D 
 
 byte header[2];
+byte payload[2];
+byte frame[5]; 
 
 // escaping function
 
@@ -42,13 +38,13 @@ void loop(){
   delayMicroseconds(20);
   digitalWrite(TRIG, LOW);
 
-  float duration = pulseIn(ECHO, HIGH); // returns integer in microseconds
+  unsigned long duration = pulseIn(ECHO, HIGH); // returns integer in microseconds
 
   // convert duration from integer to bytes 
-  byte duration_int = uint16_t(duration);
-  byte payload_high = highByte(duration_int);
-  byte payload_low = lowByte(duration_int);   // these are the payload bytes
-
+  uint16_t duration_int = uint16_t(duration);
+  payload[0] = highByte(duration_int);
+  payload[1] = lowByte(duration_int);
+  
   // header
 
   byte type = 0x01;
@@ -57,10 +53,22 @@ void loop(){
   header[1] = length;
 
   // checksum 
-  byte checksum = header[0] ^ header[1] ^ payload_high ^ payload_low;
-  
+  byte checksum = header[0] ^ header[1] ^ payload[0] ^ payload[1];
 
 
+  // construct the frame
+  frame[0] = header[0];
+  frame[1] = header[1];
+  frame[2] = payload[0];
+  frame[3] = payload[1];
+  frame[4] = checksum;
+
+  // send the frame
+  Serial.write(FLAG);
+  for(int i = 0; i<5 ; i++) EscapeAndSend(frame[i]);
+  Serial.write(FLAG);
+
+  delay(100); // small delay
 }
 
 void EscapeAndSend(byte _byte){
